@@ -8,6 +8,9 @@ from subprocess import check_output, CalledProcessError
 
 import base64
 
+import shutil
+import tempfile
+
 class gh():
     """
     # GitHub Automation Toolkit
@@ -139,7 +142,63 @@ class gh():
         except git.exc.GitCommandError as e:
             print(f"Error: {e}")
 
-    
+    def force_pull_repo_to_folder(self, repo_name, target_folder, force_overwrite=True):
+        """
+        **Clone or pull a GitHub repo into a local folder.**
+
+        **Parameters:**
+        - `repo_name` *(str)*: Name of the GitHub repository to pull.
+        - `target_folder` *(str)*: Path to the folder to receive the repo contents.
+        - `force_overwrite` *(bool)*: If True, forcibly overwrites the contents of the local folder with the remote repo.
+
+        **Behavior:**
+        - If the folder is not a git repo, it will be replaced with the contents of the remote repo.
+        - If the folder is a git repo but has untracked or conflicting files, they will be overwritten if `force_overwrite=True`.
+
+        **Example:**
+        ```python
+        g.force_pull_repo_to_folder("my-repo", "/path/to/folder", force_overwrite=True)
+        ```
+        """
+        try:
+            repo_url = f"https://github.com/{self.user.login}/{repo_name}.git"
+
+            if not os.path.exists(target_folder):
+                os.makedirs(target_folder)
+
+            # Check if target folder is a git repo
+            try:
+                repo = git.Repo(target_folder)
+                if force_overwrite:
+                    print("Force overwriting local changes and pulling latest from remote...")
+                    repo.git.fetch('--all')
+                    repo.git.reset('--hard', 'origin/main')
+                    repo.git.clean('-xdf')
+                else:
+                    print("Pulling updates (no overwrite)...")
+                    repo.remotes.origin.pull()
+            except git.exc.InvalidGitRepositoryError:
+                print("Folder is not a git repository. Cloning fresh copy...")
+                temp_dir = tempfile.mkdtemp()
+                git.Repo.clone_from(repo_url, temp_dir)
+
+                # Copy contents to target folder
+                for item in os.listdir(temp_dir):
+                    s = os.path.join(temp_dir, item)
+                    d = os.path.join(target_folder, item)
+                    if os.path.isdir(s):
+                        if os.path.exists(d):
+                            shutil.rmtree(d)
+                        shutil.copytree(s, d)
+                    else:
+                        shutil.copy2(s, d)
+
+                shutil.rmtree(temp_dir)
+
+            print(f"Repository '{repo_name}' pulled successfully to '{target_folder}'.")
+
+        except Exception as e:
+            print(f"Error: {e}")
     
 
 

@@ -1,4 +1,3 @@
-
 # GitHub Automation Toolkit Overview
 This package provides a Python class `gh` for automating common GitHub and Git tasks using the GitHub API and the Git command-line interface. This is designed to shorten and simplify github commands.
 
@@ -6,6 +5,7 @@ This package provides a Python class `gh` for automating common GitHub and Git t
 I created it to simplify using github: many things i wish I could do in github with one command actually require several commands. For example:
 - uploading an entire folder (which beforehand wasn't initiated into github) to a repo is one command in this package: `uploadFolderFileAsCommitToRepo(...)`. In normal git this would have been surprisingly complicated: first you would need to initiate the folder, but to initiate the folder you would need to pull from the original github repo, but that would then wipe all the contents of that folder or require a merging procedure.
 - in this package you can push with one command: `uploadFolderFileAsCommitToRepo(...)`. Normally using github pushing requires 3 steps: 1) adding, committing, and pushing.
+- this package allows one to forcibly pull from a repo to a folder regardless of whether the folder was initiated or not using this command: `force_pull_repo_to_folder(...)`.
 - Ultimately, there is a reason why github is so complex: it is intended to allow multiple users to work on the same project - but when you are just a single user this complexity is burdensome.
 
 ## Capabilities:
@@ -55,6 +55,23 @@ g.createRepository(repo_name="test-repo", repo_description="Testing", is_private
 **Example:**
 ```python
 g.create_branch_in_repo("/path/to/repo", "feature-branch")
+```
+
+## force_pull_repo_to_folder(self, repo_name, target_folder, force_overwrite=True):
+**Clone or pull a GitHub repo into a local folder.**
+
+**Parameters:**
+- `repo_name` *(str)*: Name of the GitHub repository to pull.
+- `target_folder` *(str)*: Path to the folder to receive the repo contents.
+- `force_overwrite` *(bool)*: If True, forcibly overwrites the contents of the local folder with the remote repo.
+
+**Behavior:**
+- If the folder is not a git repo, it will be replaced with the contents of the remote repo.
+- If the folder is a git repo but has untracked or conflicting files, they will be overwritten if `force_overwrite=True`.
+
+**Example:**
+```python
+g.force_pull_repo_to_folder("my-repo", "/path/to/folder", force_overwrite=True)
 ```
 
 ## uploadFolderFileAsCommitToRepo( self, repo_name="your_repo_name", folder_path="path/to/your/folder", commit_message="Add folder content", branch="main", force=True):
